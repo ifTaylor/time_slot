@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Time Slot</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        th, td {
+            text-align: left;
+            padding: 1px;
+            vertical-align: middle;
+            font-size: 12px;
+        }
+    
+        table tr:nth-child(4n+2) {
+            background: pink !important;
+        }
+
+        table tr:nth-child(4n+1) {
+            background: pink !important;
+        }
+
+        tr {
+            line-height: 5px;
+        }
+
+        h1 {
+            font-size: 20px;
+        }
+
+        .card-header h5 {
+            font-size: 16px;
+        }
+    </style>   
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Time Slot</h1>
+        <div id="accordion">
+            {% for month, days in months.items() %}
+                <div class="card">
+                    <div class="card-header" id="heading_{{ month }}">
+                        <h5 class="mb-0">
+                            <button class="btn btn-link" data-toggle="collapse" data-target="#collapse_{{ month }}" aria-expanded="{{ month == current_month }}" aria-controls="collapse_{{ month }}">
+                                {{ month }}
+                            </button>
+                        </h5>
+                    </div>
+                    <div id="collapse_{{ month }}" class="collapse {% if month == current_month %}show{% endif %}" aria-labelledby="heading_{{ month }}" data-parent="#accordion">
+                        <div class="card-body">
+                            <table class="table table-striped table-bordered">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th style="width: 20%">Date</th>
+                                        <th style="width: 20%">Time</th>
+                                        <th style="width: 60%">Client</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for day, rows in days.items() %}
+                                    {% for row in rows %}
+                                    <tr>
+                                        <td>{{ row[1] }}</td>
+                                        <td>{{ row[2] }}</td>
+                                        <td>
+                                            <input class="form-control" type="text" name="client_{{ row[0] }}" value="{{ row[3] }}">
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>                        
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Optional: Scroll to the expanded month
+        var expandedMonth = document.querySelector('.collapse.show');
+        expandedMonth.scrollIntoView({ behavior: 'smooth' });
+    </script>
+</body>
+</html>
