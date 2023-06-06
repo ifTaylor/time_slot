@@ -1,26 +1,29 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Time Slot</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
     <style>
-        th, td {
+        th,
+        td {
             text-align: left;
             padding: 1px;
             vertical-align: middle;
             font-size: 12px;
         }
-    
-        table tr:nth-child(4n+2) {
-            background: pink !important;
-        }
 
+        table tr:nth-child(4n+2),
         table tr:nth-child(4n+1) {
-            background: pink !important;
+            background: rgba(0, 128, 128, 0.487) !important;
         }
 
-        tr {
-            line-height: 5px;
+        table tr {
+            line-height: 1.5;
         }
 
         h1 {
@@ -30,57 +33,179 @@
         .card-header h5 {
             font-size: 16px;
         }
-    </style>   
+
+        .form-control {
+            height: 24px;
+            font-size: 12px;
+            padding: 0;
+        }
+
+        .accordion-button {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        #calendar {
+            max-width: 100%;
+        }
+    </style>
 </head>
+
 <body>
     <div class="container mt-5">
         <h1 class="text-center mb-4">Time Slot</h1>
-        <div id="accordion">
-            {% for month, days in months.items() %}
-                <div class="card">
-                    <div class="card-header" id="heading_{{ month }}">
-                        <h5 class="mb-0">
-                            <button class="btn btn-link" data-toggle="collapse" data-target="#collapse_{{ month }}" aria-expanded="{{ month == current_month }}" aria-controls="collapse_{{ month }}">
-                                {{ month }}
-                            </button>
-                        </h5>
-                    </div>
-                    <div id="collapse_{{ month }}" class="collapse {% if month == current_month %}show{% endif %}" aria-labelledby="heading_{{ month }}" data-parent="#accordion">
-                        <div class="card-body">
-                            <table class="table table-striped table-bordered">
-                                <thead class="thead-light">
-                                    <tr>
-                                        <th style="width: 20%">Date</th>
-                                        <th style="width: 20%">Time</th>
-                                        <th style="width: 60%">Client</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for day, rows in days.items() %}
-                                    {% for row in rows %}
-                                    <tr>
-                                        <td>{{ row[1] }}</td>
-                                        <td>{{ row[2] }}</td>
-                                        <td>
-                                            <input class="form-control" type="text" name="client_{{ row[0] }}" value="{{ row[3] }}">
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>                        
-                    </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div id="accordion">
+                    <script>
+                        var months = JSON.parse('{{ months|tojson|safe }}');
+                        var monthKeys = Object.keys(months).sort(); // Sort month keys in ascending order
+
+                        for (var i = 0; i < monthKeys.length; i++) {
+                            var weeks = months[monthKeys[i]];
+
+                            var card = document.createElement("div");
+                            card.className = "card";
+
+                            var cardHeader = document.createElement("div");
+                            cardHeader.className = "card-header";
+                            cardHeader.id = "heading_" + monthKeys[i];
+
+                            var h5 = document.createElement("h5");
+                            h5.className = "mb-0";
+
+                            var button = document.createElement("button");
+                            button.className = "btn btn-link accordion-button";
+                            button.setAttribute("data-toggle", "collapse");
+                            button.setAttribute("data-target", "#collapse_" + monthKeys[i]);
+                            button.setAttribute("aria-expanded", "true");
+                            button.setAttribute("aria-controls", "collapse_" + monthKeys[i]);
+                            button.innerText = monthKeys[i];
+
+                            h5.appendChild(button);
+                            cardHeader.appendChild(h5);
+                            card.appendChild(cardHeader);
+
+                            var collapse = document.createElement("div");
+                            collapse.id = "collapse_" + monthKeys[i];
+                            collapse.className = "collapse";
+                            if (i === 0) {
+                                collapse.className += " show";
+                            }
+                            collapse.setAttribute("aria-labelledby", "heading_" + monthKeys[i]);
+                            collapse.setAttribute("data-parent", "#accordion");
+
+                            var cardBody = document.createElement("div");
+                            cardBody.className = "card-body";
+
+                            var weekCounter = 1;
+
+                            for (var weekNumber in weeks) {
+                                if (!weeks.hasOwnProperty(weekNumber)) continue;
+
+                                var weekRows = weeks[weekNumber];
+
+                                var table = document.createElement("table");
+                                table.className = "table table-striped table-bordered";
+
+                                var thead = document.createElement("thead");
+                                thead.className = "thead-light";
+
+                                var tr1 = document.createElement("tr");
+                                var th1 = document.createElement("th");
+                                th1.colSpan = 3;
+                                th1.innerText = "Week " + weekCounter;
+                                tr1.appendChild(th1);
+                                thead.appendChild(tr1);
+
+                                var tr2 = document.createElement("tr");
+                                var th2_1 = document.createElement("th");
+                                th2_1.style.width = "20%";
+                                th2_1.innerText = "Date";
+                                var th2_2 = document.createElement("th");
+                                th2_2.style.width = "20%";
+                                th2_2.innerText = "Time";
+                                var th2_3 = document.createElement("th");
+                                th2_3.style.width = "60%";
+                                th2_3.innerText = "Client";
+                                tr2.appendChild(th2_1);
+                                tr2.appendChild(th2_2);
+                                tr2.appendChild(th2_3);
+                                thead.appendChild(tr2);
+
+                                var tbody = document.createElement("tbody");
+
+                                for (var j = 0; j < weekRows.length; j++) {
+                                    var row = weekRows[j];
+
+                                    var tr = document.createElement("tr");
+                                    var td1 = document.createElement("td");
+                                    td1.innerText = row[1];
+                                    var td2 = document.createElement("td");
+                                    td2.innerText = row[2];
+                                    var td3 = document.createElement("td");
+                                    var input = document.createElement("input");
+                                    input.className = "form-control";
+                                    input.type = "text";
+                                    input.name = "client_" + row[0];
+                                    input.value = row[3];
+                                    td3.appendChild(input);
+                                    tr.appendChild(td1);
+                                    tr.appendChild(td2);
+                                    tr.appendChild(td3);
+                                    tbody.appendChild(tr);
+                                }
+
+                                table.appendChild(thead);
+                                table.appendChild(tbody);
+                                cardBody.appendChild(table);
+
+                                weekCounter++;
+                            }
+
+                            collapse.appendChild(cardBody);
+                            card.appendChild(collapse);
+                            document.getElementById("accordion").appendChild(card);
+                        }
+                    </script>
                 </div>
-            {% endfor %}
+            </div>
+            <div class="col-md-6">
+                <div id="calendar"></div>
+            </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth', // Set the initial view to month
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: [
+                    // Define your events here
+                    // Example:
+                    // {
+                    //     title: 'Event 1',
+                    //     start: '2023-06-01'
+                    // },
+                    // {
+                    //     title: 'Event 2',
+                    //     start: '2023-06-05',
+                    //     end: '2023-06-07'
+                    // },
+                    // ...
+                ]
+            });
+            calendar.render();
+        });
+    </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        // Optional: Scroll to the expanded month
-        var expandedMonth = document.querySelector('.collapse.show');
-        expandedMonth.scrollIntoView({ behavior: 'smooth' });
-    </script>
 </body>
+
 </html>

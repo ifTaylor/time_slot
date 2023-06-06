@@ -1,3 +1,4 @@
+import pandas as pd
 import datetime
 import sqlite3
 from flask import Flask, render_template
@@ -34,16 +35,15 @@ def populate_table():
 
         current_date = start_date
         while current_date <= end_date:
-            time_slots = ['9:00 AM', '1:00 PM']
-            for time_slot in time_slots:
-                cursor.execute('INSERT INTO time_slots (date, time, client) VALUES (?, ?, ?)', (current_date.strftime('%m/%d/%Y'), time_slot, ''))
+            if pd.to_datetime(current_date).dayofweek < 5:  # Check if it's a weekday (0 = Monday, 4 = Friday)
+                time_slots = ['9:00 AM', '1:00 PM']
+                for time_slot in time_slots:
+                    cursor.execute('INSERT INTO time_slots (date, time, client) VALUES (?, ?, ?)', (current_date.strftime('%m/%d/%Y'), time_slot, ''))
             current_date += delta
 
         conn.commit()
 
     conn.close()
-
-
 
 @app.route('/')
 def index():
@@ -58,16 +58,16 @@ def index():
 
     conn.close()
 
-    # Group the rows by month and day
+    # Group the rows by month
     months = {}
     for row in rows:
         month = datetime.datetime.strptime(row[1], '%m/%d/%Y').strftime('%B')
-        day = datetime.datetime.strptime(row[1], '%m/%d/%Y').strftime('%d')
+        week_number = datetime.datetime.strptime(row[1], '%m/%d/%Y').isocalendar()[1]
         if month not in months:
             months[month] = {}
-        if day not in months[month]:
-            months[month][day] = []
-        months[month][day].append(row)
+        if week_number not in months[month]:
+            months[month][week_number] = []
+        months[month][week_number].append(row)
 
     # Render the table template and pass the grouped data
     return render_template('table.html', months=months)
