@@ -1,7 +1,7 @@
 import pandas as pd
 import datetime
 import sqlite3
-from flask import Flask, render_template
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 DATABASE = 'time_slots.db'
@@ -71,6 +71,50 @@ def index():
 
     # Render the table template and pass the grouped data
     return render_template('table.html', months=months)
+
+def get_messages_from_database():
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+
+    # Retrieve messages from the database
+    cursor.execute("SELECT date, client FROM time_slots")
+    rows = cursor.fetchall()
+
+    # Organize messages by date
+    messages = {}
+    for row in rows:
+        date = row[0]
+        client = row[1]
+        if date not in messages:
+            messages[date] = []
+        messages[date].append(client)
+
+    conn.close()
+    return messages
+
+@app.route('/api/messages', methods=['GET'])
+def get_messages():
+    messages = get_messages_from_database()
+    return jsonify(messages)
+
+@app.route("/update-backend", methods=["POST"])
+def update_backend():
+    # Retrieve the client ID and updated value from the request
+    data = request.json
+    clientId = data["clientId"]
+    updatedValue = data["updatedValue"]
+    
+    # Update the backend table with the new value
+    conn = sqlite3.connect(DATABASE)
+    cursor = conn.cursor()
+    
+    cursor.execute("UPDATE time_slots SET client = ? WHERE id = ?", (updatedValue, clientId))
+    
+    conn.commit()
+    conn.close()
+    
+    # Return a response indicating the success of the update
+    return jsonify({"message": "Update successful"})
 
 
 if __name__ == '__main__':

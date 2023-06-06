@@ -1,13 +1,8 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <title>Time Slot</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fullcalendar/3.10.2/fullcalendar.min.js"></script>
     <style>
         th,
         td {
@@ -46,12 +41,29 @@
             line-height: 1.5;
         }
 
-        #calendar {
-            max-width: 100%;
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: minmax(100px, auto);
+            gap: 10px;
+        }
+
+        .calendar-header {
+            text-align: center;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            padding: 5px;
+        }
+
+        .calendar-day {
+            text-align: center;
+            background-color: #e0e0e0;
+            padding: 5px;
+            cursor: pointer;
         }
     </style>
-</head>
 
+</head>
 <body>
     <div class="container mt-5">
         <h1 class="text-center mb-4">Time Slot</h1>
@@ -60,21 +72,24 @@
                 <div id="accordion">
                     <script>
                         var months = JSON.parse('{{ months|tojson|safe }}');
-                        var monthKeys = Object.keys(months).sort(); // Sort month keys in ascending order
+                        var monthKeys = Object.keys(months).sort(function(a, b) {
+                            var monthOrder = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                            return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+                        });
 
                         for (var i = 0; i < monthKeys.length; i++) {
                             var weeks = months[monthKeys[i]];
-
+            
                             var card = document.createElement("div");
                             card.className = "card";
-
+            
                             var cardHeader = document.createElement("div");
                             cardHeader.className = "card-header";
                             cardHeader.id = "heading_" + monthKeys[i];
-
+            
                             var h5 = document.createElement("h5");
                             h5.className = "mb-0";
-
+            
                             var button = document.createElement("button");
                             button.className = "btn btn-link accordion-button";
                             button.setAttribute("data-toggle", "collapse");
@@ -82,11 +97,11 @@
                             button.setAttribute("aria-expanded", "true");
                             button.setAttribute("aria-controls", "collapse_" + monthKeys[i]);
                             button.innerText = monthKeys[i];
-
+            
                             h5.appendChild(button);
                             cardHeader.appendChild(h5);
                             card.appendChild(cardHeader);
-
+            
                             var collapse = document.createElement("div");
                             collapse.id = "collapse_" + monthKeys[i];
                             collapse.className = "collapse";
@@ -95,30 +110,30 @@
                             }
                             collapse.setAttribute("aria-labelledby", "heading_" + monthKeys[i]);
                             collapse.setAttribute("data-parent", "#accordion");
-
+            
                             var cardBody = document.createElement("div");
                             cardBody.className = "card-body";
-
+            
                             var weekCounter = 1;
-
+            
                             for (var weekNumber in weeks) {
                                 if (!weeks.hasOwnProperty(weekNumber)) continue;
-
+            
                                 var weekRows = weeks[weekNumber];
-
+            
                                 var table = document.createElement("table");
                                 table.className = "table table-striped table-bordered";
-
+            
                                 var thead = document.createElement("thead");
                                 thead.className = "thead-light";
-
+            
                                 var tr1 = document.createElement("tr");
                                 var th1 = document.createElement("th");
                                 th1.colSpan = 3;
                                 th1.innerText = "Week " + weekCounter;
                                 tr1.appendChild(th1);
                                 thead.appendChild(tr1);
-
+            
                                 var tr2 = document.createElement("tr");
                                 var th2_1 = document.createElement("th");
                                 th2_1.style.width = "20%";
@@ -133,12 +148,12 @@
                                 tr2.appendChild(th2_2);
                                 tr2.appendChild(th2_3);
                                 thead.appendChild(tr2);
-
+            
                                 var tbody = document.createElement("tbody");
-
+            
                                 for (var j = 0; j < weekRows.length; j++) {
                                     var row = weekRows[j];
-
+            
                                     var tr = document.createElement("tr");
                                     var td1 = document.createElement("td");
                                     td1.innerText = row[1];
@@ -156,56 +171,62 @@
                                     tr.appendChild(td3);
                                     tbody.appendChild(tr);
                                 }
-
+            
                                 table.appendChild(thead);
                                 table.appendChild(tbody);
                                 cardBody.appendChild(table);
-
+            
                                 weekCounter++;
                             }
-
+            
                             collapse.appendChild(cardBody);
                             card.appendChild(collapse);
                             document.getElementById("accordion").appendChild(card);
                         }
+
+                        var inputs = document.getElementsByTagName("input");
+                        for (var i = 0; i < inputs.length; i++) {
+                        inputs[i].addEventListener("change", updateBackend);
+                        }
+
+                        function updateBackend(event) {
+                        var input = event.target;
+                        var clientId = input.name.split("_")[1];
+
+                        var updatedValue = input.value;
+                        
+                        fetch("/update-backend", {
+                            method: "POST",
+                            body: JSON.stringify({ clientId: clientId, updatedValue: updatedValue }),
+                            headers: {
+                            "Content-Type": "application/json"
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data);
+                        })
+                        .catch(error => {
+                            console.error(error);
+                        });
+                        }
+
+                        window.addEventListener('DOMContentLoaded', function() {
+                            var accordions = document.getElementsByClassName('accordion-button');
+                            for (var i = 0; i < accordions.length; i++) {
+                                accordions[i].setAttribute('aria-expanded', 'false');
+                                var collapseId = accordions[i].getAttribute('data-target');
+                                var collapse = document.querySelector(collapseId);
+                                collapse.classList.remove('show');
+                            }
+                            });
                     </script>
                 </div>
             </div>
-            <div class="col-md-6">
-                <div id="calendar"></div>
-            </div>
         </div>
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var calendarEl = document.getElementById('calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth', // Set the initial view to month
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                events: [
-                    // Define your events here
-                    // Example:
-                    // {
-                    //     title: 'Event 1',
-                    //     start: '2023-06-01'
-                    // },
-                    // {
-                    //     title: 'Event 2',
-                    //     start: '2023-06-05',
-                    //     end: '2023-06-07'
-                    // },
-                    // ...
-                ]
-            });
-            calendar.render();
-        });
-    </script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</div>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
-
 </html>

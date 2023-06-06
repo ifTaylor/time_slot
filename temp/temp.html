@@ -1,0 +1,61 @@
+<div class="col-md-6">
+    <div class="calendar">
+      <div class="calendar-header">Sunday</div>
+      <div class="calendar-header">Monday</div>
+      <div class="calendar-header">Tuesday</div>
+      <div class="calendar-header">Wednesday</div>
+      <div class="calendar-header">Thursday</div>
+      <div class="calendar-header">Friday</div>
+      <div class="calendar-header">Saturday</div>
+    </div>
+</div>
+  
+  <script>
+    var currentMonth = new Date().getMonth();
+    var daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
+    var calendarContainer = document.querySelector(".calendar");
+
+    function populateCalendar() {
+    // Fetch messages from the endpoint
+    fetch("/api/messages")
+        .then(response => response.json())
+        .then(data => {
+        var messages = data;
+            console.log(messages)
+        for (var day = 1; day <= daysInMonth; day++) {
+            var calendarDay = document.createElement("div");
+            calendarDay.className = "calendar-day";
+            calendarDay.innerText = day;
+            calendarDay.setAttribute("data-day", day);
+            calendarDay.addEventListener("click", handleDayClick);
+
+            // Format the month and day in MM/DD/YYYY format
+            var month = (currentMonth + 1).toString().padStart(2, "0");
+            var date = day.toString().padStart(2, "0");
+            var formattedDate = month + "/" + date + "/" + new Date().getFullYear();
+
+            // Add messages as bullet points if available
+            if (messages[formattedDate]) {
+            var messagesList = document.createElement("ul");
+            messages[formattedDate].forEach(function(message) {
+                var messageItem = document.createElement("li");
+                messageItem.innerText = message;
+                messagesList.appendChild(messageItem);
+            });
+            calendarDay.appendChild(messagesList);
+            }
+
+            calendarContainer.appendChild(calendarDay);
+        }
+        });
+    }
+
+    // Call the function to populate the calendar
+    populateCalendar();
+
+    function handleDayClick(event) {
+    var selectedDay = event.target.getAttribute("data-day");
+    // Perform desired action when a day is clicked
+    console.log("Clicked day:", selectedDay);
+    }
+  </script>
